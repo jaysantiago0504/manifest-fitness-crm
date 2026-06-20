@@ -7,6 +7,7 @@ import {
   Edit3, CheckCircle, UserPlus, Trash2, Check, LogOut,
 } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
+import { useGHLContacts } from "./useGHLContacts";
 
 const INK = "#111110";
 const RED = "#B91C1C";
@@ -343,30 +344,62 @@ function Inbox(){
 
 // ── Contacts ─────────────────────────────────────────────────────────
 function Contacts(){
+  const { contacts, loading, error } = useGHLContacts();
+
+  const rows = contacts.map(c => ({
+    id: c.id,
+    name: [c.firstName, c.lastName].filter(Boolean).join(" ") || c.email || "Unnamed contact",
+    phone: c.phone || "—",
+    tag: (c.tags && c.tags.length) ? c.tags[0] : "Contact",
+  }));
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-5xl">
+        <Card className="p-10 text-center text-sm text-black/40">Loading contacts from GHL…</Card>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-5xl">
+        <Card className="p-10 text-center text-sm text-red-600">Couldn't load contacts: {error}</Card>
+      </div>
+    );
+  }
+
+  if (rows.length === 0) {
+    return (
+      <div className="mx-auto max-w-5xl">
+        <Card className="p-10 text-center text-sm text-black/40">No contacts found in GHL yet.</Card>
+      </div>
+    );
+  }
+
   return(
     <div className="mx-auto max-w-5xl">
       <div className="space-y-3 md:hidden">
-        {ALL_CONTACTS.map(c=>(
+        {rows.map(c=>(
           <Card key={c.id} className="flex items-center gap-3 p-4">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white" style={{background:INK}}>{initials(c.name)}</div>
-            <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{c.name}</p><p className="text-xs text-black/40">{c.tag} · {c.phone}</p></div>
-            <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold text-white" style={{background:tagColor(c.status)}}>{c.status}</span>
+            <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{c.name}</p><p className="text-xs text-black/40">{c.phone}</p></div>
+            <span className="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold text-white" style={{background:"#8a8a85"}}>{c.tag}</span>
           </Card>
         ))}
       </div>
       <Card className="hidden p-0 md:block">
-        <div className="grid grid-cols-[1.5fr_1fr_1fr_1fr] border-b border-black/5 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-black/40">
-          <span>Name</span><span>Tag</span><span>Phone</span><span>Status</span>
+        <div className="grid grid-cols-[1.5fr_1fr_1fr] border-b border-black/5 px-5 py-3 text-[11px] font-bold uppercase tracking-wider text-black/40">
+          <span>Name</span><span>Phone</span><span>Tag</span>
         </div>
-        {ALL_CONTACTS.map(c=>(
-          <div key={c.id} className="grid grid-cols-[1.5fr_1fr_1fr_1fr] items-center border-b border-black/5 px-5 py-3.5 text-sm last:border-0 hover:bg-[#F8F5F0]">
+        {rows.map(c=>(
+          <div key={c.id} className="grid grid-cols-[1.5fr_1fr_1fr] items-center border-b border-black/5 px-5 py-3.5 text-sm last:border-0 hover:bg-[#F8F5F0]">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-white" style={{background:INK}}>{initials(c.name)}</div>
               <span className="font-semibold">{c.name}</span>
             </div>
-            <span className="text-black/50">{c.tag}</span>
             <span className="tabular-nums text-black/50">{c.phone}</span>
-            <span><span className="rounded-full px-2.5 py-1 text-[11px] font-bold text-white" style={{background:tagColor(c.status)}}>{c.status}</span></span>
+            <span><span className="rounded-full px-2.5 py-1 text-[11px] font-bold text-white" style={{background:"#8a8a85"}}>{c.tag}</span></span>
           </div>
         ))}
       </Card>
