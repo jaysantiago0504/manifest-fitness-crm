@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { useGHLContacts } from "./useGHLContacts";
+import { useGHLCalendar } from "./useGHLCalendar";
+import { useGHLPipeline } from "./useGHLPipeline";
 
 const INK = "#111110";
 const RED = "#B91C1C";
@@ -408,8 +410,32 @@ function Contacts(){
 }
 
 function CalendarView(){
+  const { events, loading, error } = useGHLCalendar();
   const days=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-  const events={0:["9:00 Dean"],2:["11:30 HIIT"],3:["2:00 Lakisha"],5:["5:30 Bootcamp","8:00 Open Gym"]};
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-5xl">
+        <Card className="p-10 text-center text-sm text-black/40">Loading calendar from GHL…</Card>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="mx-auto max-w-5xl">
+        <Card className="p-10 text-center text-sm text-red-600">Couldn't load calendar: {error}</Card>
+      </div>
+    );
+  }
+
+  const buckets = {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+  events.forEach(e=>{
+    const start = new Date(e.startTime);
+    const dayIndex = (start.getDay() + 6) % 7; // Sun=0..Sat=6  ->  Mon=0..Sun=6
+    const time = start.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    buckets[dayIndex].push(`${time} ${e.title || "Appointment"}`);
+  });
+
   return(
     <div className="mx-auto max-w-5xl">
       <Card className="overflow-x-auto p-5">
@@ -418,7 +444,8 @@ function CalendarView(){
             <div key={d}>
               <p className="mb-2 text-center text-[11px] font-bold uppercase tracking-wider text-black/40">{d}</p>
               <div className="min-h-44 rounded-xl border border-black/5 p-2" style={{background:CREAM}}>
-                {(events[i]||[]).map((e,j)=>(
+                {buckets[i].length===0 && <p className="px-1 py-2 text-center text-[11px] text-black/25">—</p>}
+                {buckets[i].map((e,j)=>(
                   <div key={j} className="mb-1.5 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-white" style={{background:j%2?INK:RED}}>{e}</div>
                 ))}
               </div>
@@ -431,18 +458,43 @@ function CalendarView(){
 }
 
 function Pipeline(){
+  const { stages, loading, error } = useGHLPipeline();
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <Card className="p-10 text-center text-sm text-black/40">Loading pipeline from GHL…</Card>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <Card className="p-10 text-center text-sm text-red-600">Couldn't load pipeline: {error}</Card>
+      </div>
+    );
+  }
+  if (stages.length===0) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <Card className="p-10 text-center text-sm text-black/40">No pipeline found in GHL yet.</Card>
+      </div>
+    );
+  }
+
   return(
     <div className="mx-auto max-w-6xl overflow-x-auto pb-2">
-      <div className="grid min-w-[680px] grid-cols-4 gap-4">
-        {Object.entries(pipeline).map(([stage,cards])=>(
-          <div key={stage}>
+      <div className="grid gap-4" style={{gridTemplateColumns:`repeat(${stages.length}, minmax(220px, 1fr))`, minWidth: stages.length*220}}>
+        {stages.map((stage)=>(
+          <div key={stage.id}>
             <div className="mb-3 flex items-center justify-between px-1">
-              <p className="text-xs font-bold uppercase tracking-wider text-black/50">{stage}</p>
-              <span className="rounded-full bg-black/5 px-2 py-0.5 text-[11px] font-bold text-black/50">{cards.length}</span>
+              <p className="text-xs font-bold uppercase tracking-wider text-black/50">{stage.name}</p>
+              <span className="rounded-full bg-black/5 px-2 py-0.5 text-[11px] font-bold text-black/50">{stage.opportunities.length}</span>
             </div>
             <div className="space-y-3">
-              {cards.map((c,i)=>(
-                <Card key={i} className="p-4">
+              {stage.opportunities.length===0 && <p className="px-1 text-xs text-black/25">No opportunities</p>}
+              {stage.opportunities.map((c)=>(
+                <Card key={c.id} className="p-4">
                   <p className="text-sm font-semibold">{c.name}</p>
                   <div className="mt-2 flex items-center justify-between"><span className="text-sm font-bold" style={{color:RED}}>{c.value}</span><ChevronRight size={15} className="text-black/30"/></div>
                 </Card>
