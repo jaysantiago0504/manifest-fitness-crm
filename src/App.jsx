@@ -4,7 +4,7 @@ import {
   Kanban, Megaphone, Zap, Search, Bell, Plus, TrendingUp,
   MoreHorizontal, ChevronRight, ArrowLeft, MoreVertical, X,
   Instagram, Facebook, Youtube, Clock, Mail, Phone,
-  Edit3, CheckCircle, UserPlus, Trash2, Check,
+  Edit3, CheckCircle, UserPlus, Trash2, Check, LogOut,
 } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 
@@ -116,7 +116,7 @@ const stepColor  = (t) => t==="email" ? INK  : RED;
 const tagColor   = (s) => ({Active:INK,New:RED,Warm:"#8a8a85"}[s]||"#8a8a85");
 
 // ── Shell ────────────────────────────────────────────────────────────
-export default function App() {
+export default function App({ onSignOut } = {}) {
   const [active,   setActive]   = useState("dashboard");
   const [moreOpen, setMoreOpen] = useState(false);
   const moreActive = MORE.some(m=>m.id===active);
@@ -148,6 +148,15 @@ export default function App() {
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white" style={{background:RED}}>JM</div>
             <div className="leading-tight"><p className="text-xs font-semibold text-white">Jay M.</p><p className="text-[11px] text-white/40">Owner</p></div>
+            {onSignOut && (
+              <button
+                onClick={onSignOut}
+                title="Sign out"
+                className="ml-auto flex h-7 w-7 items-center justify-center rounded-md text-white/40 hover:bg-white/5 hover:text-white"
+              >
+                <LogOut size={14} />
+              </button>
+            )}
           </div>
         </div>
       </aside>
